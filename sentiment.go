@@ -3,6 +3,7 @@ package sentiment
 import (
     "bytes"
     "fmt"
+    "strings"
 )
 
 type Histogram struct {
@@ -35,13 +36,13 @@ func (h *Histogram) Absorb(items []string) {
 }
 
 func (h *Histogram) AbsorbText(text, sep string) {
-    Absorb(strings.Split(text, sep))
+    h.Absorb(strings.Split(text, sep))
 }
 
 func (h *Histogram) String() string {
     buffer := bytes.NewBufferString("")
     for key, value := range h.Freq {
-        fmt.Fprintf(buffer, "%v: %5d", key, value)
+        fmt.Fprintf(buffer, "%v:%-10d\n", key, value)
     }
     return string(buffer.Bytes())
 }
