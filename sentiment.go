@@ -15,7 +15,7 @@ func NewHistogram(excl ...string) *Histogram {
     exclSet := make(map[string] bool)
     if excl != nil {
         for _, item := range excl {
-            exclSet[item] = true    
+            exclSet[item] = true
         }
     }
     return &Histogram {
