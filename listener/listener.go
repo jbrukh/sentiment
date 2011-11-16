@@ -30,21 +30,35 @@ func main() {
 	stream := make(chan *twitterstream.Tweet)
 	client := twitterstream.NewClient(username, password)
 
-	fmt.Printf("track = %v\n", *track) 
-    tracks := strings.Split(*track, ",")
+	fmt.Printf("track = %v\n", *track)
+	tracks := strings.Split(*track, ",")
 	err := client.Track(tracks, stream)
 	if err != nil {
 		println(err.String())
 	}
 
-    hist := sentiment.NewHistogram()
-    hist.Exclude(tracks)
+	hist := sentiment.NewHistogram()
+	hist.Exclude(tracks)
+    hist.Exclude(sentiment.CommonEnglish())
+    hist.Exclude(sentiment.TwitterTrash())
 
 	for {
 		tw := <-stream
-        text := tw.Text
+		text := sanitize(tw.Text)
 		println(tw.User.Screen_name, ": ", text)
-        hist.AbsorbText(text, " ")
-        println(hist.String())
+		hist.AbsorbText(text, " ")
+		printPops(hist.MostPopular())
 	}
+}
+
+func sanitize(text string) string {
+    return strings.ToLower(text)
+}
+
+func printPops(pops sentiment.TokenPops) {
+    fmt.Println("")
+    for _, value := range pops[:5] {
+        fmt.Printf("%v:%5d\n", value.Token, value.Pop)   
+    }
+    fmt.Println("")
 }
