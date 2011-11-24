@@ -10,9 +10,11 @@ import "sentiment"
 var username string
 var password string
 var track *string
+var top *int
 
 func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
+    top = flag.Int("top", 10, "top of the pops")
 	flag.Parse()
 
 	args := flag.Args()
@@ -32,6 +34,7 @@ func main() {
 
 	fmt.Printf("track = %v\n", *track)
 	tracks := strings.Split(*track, ",")
+
 	err := client.Track(tracks, stream)
 	if err != nil {
 		println(err.String())
@@ -39,26 +42,30 @@ func main() {
 
 	hist := sentiment.NewHistogram()
 	hist.Exclude(tracks)
-    hist.Exclude(sentiment.CommonEnglish())
-    hist.Exclude(sentiment.TwitterTrash())
+	hist.Exclude(sentiment.CommonEnglish())
+	hist.Exclude(sentiment.TwitterTrash())
 
 	for {
 		tw := <-stream
 		text := sanitize(tw.Text)
-		println(tw.User.Screen_name, ": ", text)
-		hist.AbsorbText(text, " ")
-		printPops(hist.MostPopular())
+		fmt.Println(text)
+		//hist.AbsorbText(text, " ")
+		//printPops(hist.MostPopular())
 	}
 }
 
 func sanitize(text string) string {
-    return strings.ToLower(text)
+	return strings.ToLower(text)
 }
 
 func printPops(pops sentiment.TokenPops) {
-    fmt.Println("")
-    for _, value := range pops[:5] {
-        fmt.Printf("%v:%5d\n", value.Token, value.Pop)   
+	fmt.Println("")
+    end := *top
+    if end > len(pops) {
+        end = len(pops)
     }
-    fmt.Println("")
+	for _, value := range pops[:end] {
+		fmt.Printf("%5d %v\n", value.Pop, value.Token) 
+	}
+	fmt.Println("")
 }

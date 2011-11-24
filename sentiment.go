@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
-    "sort"
+	"sort"
+//    . "bayesian"
 )
 
 type Histogram struct {
-	Freq       map[string]int
-	Exclusions map[string]bool
+	Freq                map[string]int
+	Exclusions          map[string]bool
 }
 
 // NewHistogram returns a new, empty histogram
@@ -30,6 +31,10 @@ func (h *Histogram) Exclude(excl []string) {
 			}
 		}
 	}
+}
+
+func (h *Histogram) ExcludePrefix(excl []string) {
+// TODO
 }
 
 // Absorb will add the specified list of tokens to
@@ -53,7 +58,6 @@ func (h *Histogram) AbsorbText(text, sep string) {
 	h.Absorb(strings.Split(text, sep))
 }
 
-
 func (h *Histogram) String() string {
 	buffer := bytes.NewBufferString("")
 	for key, value := range h.Freq {
@@ -64,21 +68,22 @@ func (h *Histogram) String() string {
 
 // Token popularity
 type TokenPop struct {
-    Token string
-    Pop int
+	Token string
+	Pop   int
 }
 type TokenPops []TokenPop
 
-func (p TokenPops) Swap(i, j int) { p[i], p[j] = p[j], p[i] } 
-func (p TokenPops) Len() int { return len(p) } 
-func (p TokenPops) Less(i, j int) bool { return p[i].Pop > p[j].Pop } 
+func (p TokenPops) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p TokenPops) Len() int           { return len(p) }
+func (p TokenPops) Less(i, j int) bool { return p[i].Pop > p[j].Pop }
 
 func (h *Histogram) MostPopular() TokenPops {
-    pops := make(TokenPops, len(h.Freq))
-    i := 0
-    for k, v := range h.Freq {
-        pops[i] = TokenPop{k, v}; i++
-    }
-    sort.Sort(pops)
-    return pops
+	pops := make(TokenPops, len(h.Freq))
+	i := 0
+	for k, v := range h.Freq {
+		pops[i] = TokenPop{k, v}
+		i++
+	}
+	sort.Sort(pops)
+	return pops
 }

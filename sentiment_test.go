@@ -36,11 +36,11 @@ func TestEmptyString(t *testing.T) {
 }
 
 func TestPopularity(t *testing.T) {
-    h := NewHistogram()
-    h.Absorb([]string{"dog", "dog", "dog", "cat", "cat", "mouse"})
-    pops := h.MostPopular()
-    fmt.Print(pops)
-    if pops[0].Token != "dog" || pops[1].Token != "cat" || pops[2].Token != "mouse" {
-        t.Error("oops, wrong pops")
-    }
+	h := NewHistogram()
+	h.Absorb([]string{"dog", "dog", "dog", "cat", "cat", "mouse"})
+	pops := h.MostPopular()
+	fmt.Print(pops)
+	if pops[0].Token != "dog" || pops[1].Token != "cat" || pops[2].Token != "mouse" {
+		t.Error("oops, wrong pops")
+	}
 }
