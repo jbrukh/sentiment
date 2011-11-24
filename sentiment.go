@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 	"sort"
-//    . "bayesian"
+	//    . "bayesian"
 )
 
 type Histogram struct {
-	Freq                map[string]int
-	Exclusions          map[string]bool
+	Freq       map[string]int
+	Exclusions map[string]bool
 }
 
 // NewHistogram returns a new, empty histogram
@@ -34,7 +34,7 @@ func (h *Histogram) Exclude(excl []string) {
 }
 
 func (h *Histogram) ExcludePrefix(excl []string) {
-// TODO
+	// TODO
 }
 
 // Absorb will add the specified list of tokens to

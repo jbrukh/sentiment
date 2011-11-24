@@ -14,7 +14,7 @@ var top *int
 
 func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
-    top = flag.Int("top", 10, "top of the pops")
+	top = flag.Int("top", 10, "top of the pops")
 	flag.Parse()
 
 	args := flag.Args()
@@ -60,12 +60,12 @@ func sanitize(text string) string {
 
 func printPops(pops sentiment.TokenPops) {
 	fmt.Println("")
-    end := *top
-    if end > len(pops) {
-        end = len(pops)
-    }
+	end := *top
+	if end > len(pops) {
+		end = len(pops)
+	}
 	for _, value := range pops[:end] {
-		fmt.Printf("%5d %v\n", value.Pop, value.Token) 
+		fmt.Printf("%5d %v\n", value.Pop, value.Token)
 	}
 	fmt.Println("")
 }
