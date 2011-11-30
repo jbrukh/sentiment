@@ -1,20 +1,25 @@
 package main
 
-import "fmt"
-import "os"
-import "twitterstream"
-import "flag"
-import "strings"
-import "sentiment"
+import (
+    "fmt"
+    "os"
+    "twitterstream"
+    "flag"
+    "strings"
+    . "sentiment"
+    . "bayesian"
+)
 
 var username string
 var password string
 var track *string
 var top *int
+var classifier *Classifier
+var san *Sanitizer
+var count [2]int
 
 func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
-	top = flag.Int("top", 10, "top of the pops")
 	flag.Parse()
 
 	args := flag.Args()
@@ -25,10 +30,20 @@ func init() {
 	username = args[0]
 	password = args[1]
 
+    // train the classifier
+    classifier = NewClassifier(Positive, Negative)
+    LearnFile(classifier, "data/positive.txt", Positive)
+    LearnFile(classifier, "data/negative.txt", Negative)
+    fmt.Println("classifier is trained...")
+
+    // init the sanitizer
+    san = NewSanitizer(SanitizeToLower,
+                       SanitizeNoMentions,
+                       SanitizeLinks,
+                       SanitizePunctuation)
 }
 
 func main() {
-
 	stream := make(chan *twitterstream.Tweet)
 	client := twitterstream.NewClient(username, password)
 
@@ -40,32 +55,28 @@ func main() {
 		println(err.String())
 	}
 
-	hist := sentiment.NewHistogram()
-	hist.Exclude(tracks)
-	hist.Exclude(sentiment.CommonEnglish())
-	hist.Exclude(sentiment.TwitterTrash())
-
 	for {
 		tw := <-stream
-		text := sanitize(tw.Text)
-		fmt.Println(text)
-		//hist.AbsorbText(text, " ")
-		//printPops(hist.MostPopular())
+        document := sanitize(tw.Text)
+        process(document)
 	}
 }
-
-func sanitize(text string) string {
-	return strings.ToLower(text)
+const thresh = .95
+func process(document []string) {
+    fmt.Printf("\n%v\n", document)
+    scores, inx, _ := classifier.Probabilities(document)
+    class := classifier.Classes[inx]
+    count[inx]++
+    posrate := fmt.Sprintf("%2.2f", float32(count[0])/float32(count[0]+count[1]))
+    var learned string
+    if scores[inx] > thresh {
+        classifier.Learn(document, class)
+        learned = "***"
+    }
+    fmt.Printf("%2.2f %v %v\n", scores[inx], class, learned)
+    fmt.Printf("%s (Positive Rate)\n", posrate)
 }
 
-func printPops(pops sentiment.TokenPops) {
-	fmt.Println("")
-	end := *top
-	if end > len(pops) {
-		end = len(pops)
-	}
-	for _, value := range pops[:end] {
-		fmt.Printf("%5d %v\n", value.Pop, value.Token)
-	}
-	fmt.Println("")
+func sanitize(text string) (document []string) {
+    return san.GetDocument(text)
 }

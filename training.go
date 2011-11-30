@@ -19,7 +19,7 @@ func ClassifierPrompt(classifier *Classifier) {
 	for {
 		input := bufio.NewReader(os.Stdin)
 		line, _, err := input.ReadLine()
-		if err != nil || line == "quit" {
+		if err != nil || string(line) == "quit" {
 			println("exiting")
 			break
 		}
@@ -40,7 +40,7 @@ func LearnFile(classifier *Classifier, name string, class Class) {
 			break
 		}
 		words := strings.Split(string(line), " ")
-		fmt.Printf("%v\n", words)
+		//fmt.Printf("%v\n", words)
 		classifier.Learn(words, class)
 	}
 }
