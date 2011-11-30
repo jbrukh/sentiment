@@ -27,7 +27,7 @@ func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 
-    flag.Parse()
+	flag.Parse()
 
 	args := flag.Args()
 	if len(args) != 2 {
@@ -74,60 +74,60 @@ func main() {
 // if necessary, calculate the positive tweet
 // rate and print information.
 func process(document string) {
-    // the sanitized document
-    doc := san.GetDocument(document)
+	// the sanitized document
+	doc := san.GetDocument(document)
 
-    // classification of this document
+	// classification of this document
 	scores, inx, _ := classifier.Probabilities(doc)
 	class := classifier.Classes[inx]
 	count[inx]++
-    highCount[inx]++
+	highCount[inx]++
 
-    // the rate of positive sentiment
-	posrate := float64(count[0])/float64(count[0]+count[1])
-    highrate := float64(highCount[0])/float64(highCount[0]+highCount[1])
+	// the rate of positive sentiment
+	posrate := float64(count[0]) / float64(count[0]+count[1])
+	highrate := float64(highCount[0]) / float64(highCount[0]+highCount[1])
 	learned := ""
 
-    // if above the threshold, then learn
-    // this document
-    if scores[inx] > *thresh {
+	// if above the threshold, then learn
+	// this document
+	if scores[inx] > *thresh {
 		classifier.Learn(doc, class)
 		learned = "***"
-        highCount[inx]++
+		highCount[inx]++
 	}
-    
-    // print info
-    prettyPrintDoc(doc)
+
+	// print info
+	prettyPrintDoc(doc)
 	fmt.Printf("%2.5f %v %v\n", scores[inx], class, learned)
 	fmt.Printf("%2.5f (all posrate)\n", posrate)
 	fmt.Printf("%2.5f (high-probability posrate)\n", highrate)
 }
 
 func prettyPrintDoc(doc []string) {
-    fmt.Printf("\n%v\n", doc)
-    fmt.Printf("\t")
-    for _, word := range doc {
-        fmt.Printf("%7s", abbrev(word, 5))
-    }
-    fmt.Println("")
+	fmt.Printf("\n%v\n", doc)
+	fmt.Printf("\t")
+	for _, word := range doc {
+		fmt.Printf("%7s", abbrev(word, 5))
+	}
+	fmt.Println("")
 
-    freqs := classifier.WordFrequencies(doc)
-    for i := 0; i < 2; i++ {
-        fmt.Printf("%6s", classifier.Classes[i])
-        for j := 0; j < len(doc); j++ {
-            fmt.Printf("%7.4f", freqs[i][j])
-        }
-        fmt.Println("")
-    }
+	freqs := classifier.WordFrequencies(doc)
+	for i := 0; i < 2; i++ {
+		fmt.Printf("%6s", classifier.Classes[i])
+		for j := 0; j < len(doc); j++ {
+			fmt.Printf("%7.4f", freqs[i][j])
+		}
+		fmt.Println("")
+	}
 }
 
 func abbrev(word string, max int) (result string) {
-    result = word
-    if max < 5 {
-        panic("max must be at least 5")
-    }
-    if len(word) > max {
-        result = word[0:max-2] + ".."
-    }
-    return
+	result = word
+	if max < 5 {
+		panic("max must be at least 5")
+	}
+	if len(word) > max {
+		result = word[0:max-2] + ".."
+	}
+	return
 }
