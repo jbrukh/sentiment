@@ -1,13 +1,13 @@
 package main
 
 import (
-    "fmt"
-    "os"
-    "twitterstream"
-    "flag"
-    "strings"
-    . "sentiment"
-    . "bayesian"
+	"fmt"
+	"os"
+	"twitterstream"
+	"flag"
+	"strings"
+	. "sentiment"
+	. "bayesian"
 )
 
 var username string
@@ -30,17 +30,17 @@ func init() {
 	username = args[0]
 	password = args[1]
 
-    // train the classifier
-    classifier = NewClassifier(Positive, Negative)
-    LearnFile(classifier, "data/positive.txt", Positive)
-    LearnFile(classifier, "data/negative.txt", Negative)
-    fmt.Println("classifier is trained...")
+	// train the classifier
+	classifier = NewClassifier(Positive, Negative)
+	LearnFile(classifier, "data/positive.txt", Positive)
+	LearnFile(classifier, "data/negative.txt", Negative)
+	fmt.Println("classifier is trained...")
 
-    // init the sanitizer
-    san = NewSanitizer(SanitizeToLower,
-                       SanitizeNoMentions,
-                       SanitizeLinks,
-                       SanitizePunctuation)
+	// init the sanitizer
+	san = NewSanitizer(SanitizeToLower,
+		SanitizeNoMentions,
+		SanitizeLinks,
+		SanitizePunctuation)
 }
 
 func main() {
@@ -57,26 +57,28 @@ func main() {
 
 	for {
 		tw := <-stream
-        document := sanitize(tw.Text)
-        process(document)
+		document := sanitize(tw.Text)
+		process(document)
 	}
 }
+
 const thresh = .95
+
 func process(document []string) {
-    fmt.Printf("\n%v\n", document)
-    scores, inx, _ := classifier.Probabilities(document)
-    class := classifier.Classes[inx]
-    count[inx]++
-    posrate := fmt.Sprintf("%2.2f", float32(count[0])/float32(count[0]+count[1]))
-    var learned string
-    if scores[inx] > thresh {
-        classifier.Learn(document, class)
-        learned = "***"
-    }
-    fmt.Printf("%2.2f %v %v\n", scores[inx], class, learned)
-    fmt.Printf("%s (Positive Rate)\n", posrate)
+	fmt.Printf("\n%v\n", document)
+	scores, inx, _ := classifier.Probabilities(document)
+	class := classifier.Classes[inx]
+	count[inx]++
+	posrate := fmt.Sprintf("%2.2f", float32(count[0])/float32(count[0]+count[1]))
+	var learned string
+	if scores[inx] > thresh {
+		classifier.Learn(document, class)
+		learned = "***"
+	}
+	fmt.Printf("%2.2f %v %v\n", scores[inx], class, learned)
+	fmt.Printf("%s (Positive Rate)\n", posrate)
 }
 
 func sanitize(text string) (document []string) {
-    return san.GetDocument(text)
+	return san.GetDocument(text)
 }
