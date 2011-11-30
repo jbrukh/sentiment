@@ -40,7 +40,9 @@ func init() {
 	san = NewSanitizer(SanitizeToLower,
 		SanitizeNoMentions,
 		SanitizeNoLinks,
-		SanitizePunctuation)
+        SanitizeNoNumbers,
+		SanitizePunctuation,
+        CombineNots)
 }
 
 func main() {
@@ -69,13 +71,13 @@ func process(document []string) {
 	scores, inx, _ := classifier.Probabilities(document)
 	class := classifier.Classes[inx]
 	count[inx]++
-	posrate := fmt.Sprintf("%2.2f", float32(count[0])/float32(count[0]+count[1]))
+	posrate := fmt.Sprintf("%2.5f", float32(count[0])/float32(count[0]+count[1]))
 	var learned string
 	if scores[inx] > thresh {
 		classifier.Learn(document, class)
 		learned = "***"
 	}
-	fmt.Printf("%2.2f %v %v\n", scores[inx], class, learned)
+	fmt.Printf("%2.5f %v %v\n", scores[inx], class, learned)
 	fmt.Printf("%s (Positive Rate)\n", posrate)
 }
 
