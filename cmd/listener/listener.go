@@ -39,7 +39,7 @@ func init() {
 	// init the sanitizer
 	san = NewSanitizer(SanitizeToLower,
 		SanitizeNoMentions,
-		SanitizeLinks,
+		SanitizeNoLinks,
 		SanitizePunctuation)
 }
 
