@@ -40,9 +40,9 @@ func init() {
 	san = NewSanitizer(SanitizeToLower,
 		SanitizeNoMentions,
 		SanitizeNoLinks,
-        SanitizeNoNumbers,
+		SanitizeNoNumbers,
 		SanitizePunctuation,
-        CombineNots)
+		CombineNots)
 }
 
 func main() {
