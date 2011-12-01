@@ -2,6 +2,7 @@ the
 of
 and
 a
+am
 to
 in
 is
@@ -60,6 +61,7 @@ other
 into
 than
 its
+it's
 time
 only
 could
@@ -72,7 +74,6 @@ then
 two
 first
 any
-like
 now
 my
 such

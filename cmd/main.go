@@ -22,11 +22,13 @@ var exclList *string       // list of excluded terms
 var count [2]int           // the count of all classifications
 var highCount [2]int       // the count of all learned classifications
 var thresh *float64        // threshold for learning
+var printOnly *bool        // suppress classification
 
 func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
+    printOnly = flat.Bool("print-only", false, "only print the Tweets, do not classify them")
 	flag.Parse()
 
 	args := flag.Args()
@@ -49,14 +51,15 @@ func init() {
 		fmt.Printf("excluding: %v\n", excl)
 	}
 
-    stopWords := ReadFile("data/stopwords.txt")
-    fmt.Printf("stop words: %v\n", stopWords)
+	stopWords := ReadFile("data/stopwords.txt")
+	fmt.Printf("stop words: %v\n", stopWords)
 	san = NewSanitizer(
 		ToLower,
 		NoMentions,
 		NoLinks,
 		NoNumbers,
 		Punctuation,
+        NoSmallWords,
 		CombineNots,
 		Exclusions(excl),
 		Exclusions(stopWords),
@@ -76,8 +79,12 @@ func main() {
 	}
 
 	for {
-		tw := <-stream
-		process(tw.Text)
+		tw := (<-stream).Text
+        if (!*printOnly) {
+		    process(tw)
+        } else {
+            fmt.Println(tw)
+        }
 	}
 }
 
