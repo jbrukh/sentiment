@@ -5,41 +5,42 @@ import "regexp"
 
 // constants
 const punct = "?!~`@#$%^&*\\(\\)\\-_+={}\\[\\]:;|\\\\\"'/.,<>"
-var leading = regexp.MustCompile("^[" + punct + "]+|[" + punct[2:] + "]+$")
-var StopWords = []string{"it", "of"}
 
-func SanitizeToLower(words []string) (result []string) {
+var leading = regexp.MustCompile("^[" + punct + "]+|[" + punct[2:] + "]+$")
+var StopWords = []string{"of"}
+
+func ToLower(words []string) (result []string) {
 	return apply(words, func(input string) string {
 		return strings.ToLower(input)
 	})
 }
 
-func SanitizeNoMentions(words []string) (result []string) {
+func NoMentions(words []string) (result []string) {
 	return filterIf(words, func(input string) bool {
 		return strings.HasPrefix(input, "@")
 	})
 }
 
-func SanitizeNoLinks(words []string) (result []string) {
+func NoLinks(words []string) (result []string) {
 	return filterIf(words, func(input string) bool {
 		return strings.HasPrefix(input, "http://")
 	})
 }
 
-func SanitizeNoNumbers(words []string) (result []string) {
+func NoNumbers(words []string) (result []string) {
 	numbers := regexp.MustCompile("[0-9]+")
 	return filterIf(words, func(input string) bool {
 		return numbers.Match([]byte(input))
 	})
 }
 
-func SanitizeSmallWords(words []string) (result []string) {
+func SmallWords(words []string) (result []string) {
 	return filterIf(words, func(input string) bool {
-		return len(input)<3
+		return len(input) < 3
 	})
 }
 
-func SanitizePunctuation(words []string) (result []string) {
+func Punctuation(words []string) (result []string) {
 	result = apply(words, func(input string) string {
 		return string(leading.ReplaceAll([]byte(input), []byte("")))
 	})
@@ -57,7 +58,7 @@ func CombineNots(words []string) (result []string) {
 	return
 }
 
-func SanitizeExclusions(excl []string) SanitizerFunc {
+func Exclusions(excl []string) SanitizerFunc {
 	if len(excl) < 1 {
 		return nil
 	}
@@ -72,4 +73,3 @@ func SanitizeExclusions(excl []string) SanitizerFunc {
 		})
 	}
 }
-

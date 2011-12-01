@@ -28,7 +28,6 @@ func init() {
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
 	flag.Parse()
-	
 
 	args := flag.Args()
 	if len(args) != 2 {
@@ -46,19 +45,20 @@ func init() {
 
 	// init the sanitizer
 	excl := strings.Split(*exclList, ",")
-    if *exclList != "" { 
-        fmt.Printf("excluding: %v\n", excl)
+	if *exclList != "" {
+		fmt.Printf("excluding: %v\n", excl)
 	}
-    san = NewSanitizer(SanitizeToLower,
-		SanitizeNoMentions,
-		SanitizeNoLinks,
-		SanitizeNoNumbers,
-        SanitizeSmallWords,
-		SanitizePunctuation,
+	san = NewSanitizer(
+		ToLower,
+		NoMentions,
+		NoLinks,
+		NoNumbers,
+		SmallWords,
+		Punctuation,
 		CombineNots,
-		SanitizeExclusions(excl),
-        SanitizeExclusions(StopWords),
-    )
+		Exclusions(excl),
+		Exclusions(StopWords),
+	)
 }
 
 func main() {
@@ -84,11 +84,11 @@ func main() {
 // rate and print information.
 func process(document string) {
 	fmt.Printf("\n> %v\n\n", document)
-    // the sanitized document
+	// the sanitized document
 	doc := san.GetDocument(document)
-    if len(doc) < 1 {
-        return
-    }
+	if len(doc) < 1 {
+		return
+	}
 
 	// classification of this document
 	scores, inx, _ := classifier.Probabilities(doc)

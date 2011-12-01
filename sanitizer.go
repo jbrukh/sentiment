@@ -51,4 +51,3 @@ func filterIf(words []string, f func(string) bool) (result []string) {
 	}
 	return
 }
-
