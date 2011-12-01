@@ -13,26 +13,26 @@ import (
 
 const DefaultThresh = .95
 
-var username string                 // twitter username
-var password string                 // twitter password
-var track *string                   // comma-delimited list of tracking keywords for twitter api
-var classifier *Classifier          // the classifier
-var san *Sanitizer                  // the sanitizer
-var exclList *string                // list of excluded terms
-var count [2]int                    // the count of all classifications
-var highCount [2]int                // the count of all learned classifications
-var thresh *float64                 // threshold for learning
+var username string        // twitter username
+var password string        // twitter password
+var track *string          // comma-delimited list of tracking keywords for twitter api
+var classifier *Classifier // the classifier
+var san *Sanitizer         // the sanitizer
+var exclList *string       // list of excluded terms
+var count [2]int           // the count of all classifications
+var highCount [2]int       // the count of all learned classifications
+var thresh *float64        // threshold for learning
 
 func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
-    exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
+	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
 	flag.Parse()
-    fmt.Printf("excluding: %v\n", *exclList)
+	
 
 	args := flag.Args()
 	if len(args) != 2 {
-		println("Usage: [flags...] <username> <password>")
+		println("Usage: [--track|--thresh|--exclude|--help] <username> <password>")
 		os.Exit(1)
 	}
 	username = args[0]
@@ -42,17 +42,23 @@ func init() {
 	classifier = NewClassifier(Positive, Negative)
 	LearnFile(classifier, "data/positive.txt", Positive)
 	LearnFile(classifier, "data/negative.txt", Negative)
-	fmt.Println("classifier is trained...")
+	fmt.Println("classifier is trained!")
 
 	// init the sanitizer
-    excl := strings.Split(*exclList, ",")
-	san = NewSanitizer(SanitizeToLower,
+	excl := strings.Split(*exclList, ",")
+    if *exclList != "" { 
+        fmt.Printf("excluding: %v\n", excl)
+	}
+    san = NewSanitizer(SanitizeToLower,
 		SanitizeNoMentions,
 		SanitizeNoLinks,
 		SanitizeNoNumbers,
+        SanitizeSmallWords,
 		SanitizePunctuation,
 		CombineNots,
-        SanitizeExclusions(excl))
+		SanitizeExclusions(excl),
+        SanitizeExclusions(StopWords),
+    )
 }
 
 func main() {
@@ -77,14 +83,18 @@ func main() {
 // if necessary, calculate the positive tweet
 // rate and print information.
 func process(document string) {
-	// the sanitized document
+	fmt.Printf("\n> %v\n\n", document)
+    // the sanitized document
 	doc := san.GetDocument(document)
+    if len(doc) < 1 {
+        return
+    }
 
 	// classification of this document
 	scores, inx, _ := classifier.Probabilities(doc)
-    logScores, logInx, _ := classifier.Scores(doc)
+	logScores, logInx, _ := classifier.Scores(doc)
 	class := classifier.Classes[inx]
-    logClass := classifier.Classes[logInx]
+	logClass := classifier.Classes[logInx]
 	count[inx]++
 
 	// the rate of positive sentiment
@@ -100,18 +110,18 @@ func process(document string) {
 
 	// print info
 	prettyPrintDoc(doc)
-	fmt.Printf("%5.5f %v %v\n", scores[inx], class, learned)
-    fmt.Printf("%5.3f %v\n", logScores[logInx], logClass)
-    if logClass != class {
-        // incorrect classification due to underflow
-        fmt.Println("CLASSIFICATION ERROR!")
-    }
-	fmt.Printf("%5.5f (posrate)\n", posrate)
+	fmt.Printf("%7.5f %v %v\n", scores[inx], class, learned)
+	fmt.Printf("%7.2f %v\n", logScores[logInx], logClass)
+	if logClass != class {
+		// incorrect classification due to underflow
+		fmt.Println("CLASSIFICATION ERROR!")
+	}
+	fmt.Printf("%7.5f (posrate)\n", posrate)
 	//fmt.Printf("%5.5f (high-probability posrate)\n", highrate)
 }
 
 func prettyPrintDoc(doc []string) {
-	fmt.Printf("\n%v\n", doc)
+	//fmt.Printf("\n%v\n", doc)
 	fmt.Printf("\t")
 	for _, word := range doc {
 		fmt.Printf("%7s", abbrev(word, 5))
