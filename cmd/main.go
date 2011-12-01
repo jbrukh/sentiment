@@ -13,21 +13,22 @@ import (
 
 const DefaultThresh = .95
 
-var username string
-var password string
-var track *string
-var top *int
-var classifier *Classifier
-var san *Sanitizer
-var count [2]int
-var highCount [2]int
-var thresh *float64
+var username string                 // twitter username
+var password string                 // twitter password
+var track *string                   // comma-delimited list of tracking keywords for twitter api
+var classifier *Classifier          // the classifier
+var san *Sanitizer                  // the sanitizer
+var exclList *string                // list of excluded terms
+var count [2]int                    // the count of all classifications
+var highCount [2]int                // the count of all learned classifications
+var thresh *float64                 // threshold for learning
 
 func init() {
 	track = flag.String("track", "", "comma-separated list of tracking terms")
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
-
+    exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
 	flag.Parse()
+    fmt.Printf("excluding: %v\n", *exclList)
 
 	args := flag.Args()
 	if len(args) != 2 {
@@ -44,12 +45,14 @@ func init() {
 	fmt.Println("classifier is trained...")
 
 	// init the sanitizer
+    excl := strings.Split(*exclList, ",")
 	san = NewSanitizer(SanitizeToLower,
 		SanitizeNoMentions,
 		SanitizeNoLinks,
 		SanitizeNoNumbers,
 		SanitizePunctuation,
-		CombineNots)
+		CombineNots,
+        SanitizeExclusions(excl))
 }
 
 func main() {
@@ -79,13 +82,13 @@ func process(document string) {
 
 	// classification of this document
 	scores, inx, _ := classifier.Probabilities(doc)
+    logScores, logInx, _ := classifier.Scores(doc)
 	class := classifier.Classes[inx]
+    logClass := classifier.Classes[logInx]
 	count[inx]++
-	highCount[inx]++
 
 	// the rate of positive sentiment
 	posrate := float64(count[0]) / float64(count[0]+count[1])
-	highrate := float64(highCount[0]) / float64(highCount[0]+highCount[1])
 	learned := ""
 
 	// if above the threshold, then learn
@@ -93,14 +96,18 @@ func process(document string) {
 	if scores[inx] > *thresh {
 		classifier.Learn(doc, class)
 		learned = "***"
-		highCount[inx]++
 	}
 
 	// print info
 	prettyPrintDoc(doc)
-	fmt.Printf("%2.5f %v %v\n", scores[inx], class, learned)
-	fmt.Printf("%2.5f (all posrate)\n", posrate)
-	fmt.Printf("%2.5f (high-probability posrate)\n", highrate)
+	fmt.Printf("%5.5f %v %v\n", scores[inx], class, learned)
+    fmt.Printf("%5.3f %v\n", logScores[logInx], logClass)
+    if logClass != class {
+        // incorrect classification due to underflow
+        fmt.Println("CLASSIFICATION ERROR!")
+    }
+	fmt.Printf("%5.5f (posrate)\n", posrate)
+	//fmt.Printf("%5.5f (high-probability posrate)\n", highrate)
 }
 
 func prettyPrintDoc(doc []string) {

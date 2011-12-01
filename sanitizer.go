@@ -2,6 +2,7 @@ package sentiment
 
 import "strings"
 import "regexp"
+import "fmt"
 
 // SanitizerFunc will operate on an entire document and return
 // the result. Note that the length of the processed array
@@ -26,8 +27,10 @@ func (s *Sanitizer) GetDocument(document string) (result []string) {
 	document = string(whitespace.ReplaceAll([]byte(document), []byte(" ")))
 	result = strings.Split(document, " ")
 	for _, f := range s.funcs {
-		result = f(result)
-	}
+		if f != nil {
+            result = f(result)
+	    }
+    }
 	return
 }
 
@@ -92,4 +95,21 @@ func CombineNots(words []string) (result []string) {
 		}
 	}
 	return
+}
+
+func SanitizeExclusions(excl []string) SanitizerFunc {
+    if len(excl) < 1 {
+        return nil
+    }
+    m := make(map[string]bool, len(excl))
+    for _, item := range excl {
+        m[item] = true
+    }
+    fmt.Printf("%v\n", m)
+    return func(words []string) []string {
+        return filter(words, func(input string) bool {
+                _, ok := m[input]
+                return !ok
+        })
+    }
 }

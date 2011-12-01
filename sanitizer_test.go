@@ -11,6 +11,17 @@ func Assert(t *testing.T, condition bool, args ...interface{}) {
 	}
 }
 
+func compareOutput(t *testing.T, input, output []string, f SanitizerFunc) {
+    if f == nil {
+        return
+    }
+    result := f(input)
+	Assert(t, len(result) == len(output), "length")
+	for inx, word := range result {
+		Assert(t, word == output[inx], inx, word)
+	}
+}
+
 func TestPunctuation(t *testing.T) {
 	f := SanitizePunctuation
 	input := []string{"poop!", "poop!?", "poop!!", "!poop", "!?poop", "hello", "hello&*^*&^$#^$%#",
@@ -26,23 +37,27 @@ func TestPunctuation(t *testing.T) {
 }
 
 func TestNoMentions(t *testing.T) {
-	f := SanitizeNoMentions
 	input := []string{"@jake", "jake"}
 	output := []string{"jake"}
-	result := f(input)
-	Assert(t, len(result) == len(output), "length")
-	for inx, word := range result {
-		Assert(t, word == output[inx], inx, word)
-	}
+    compareOutput(t, input, output, SanitizeNoMentions)
 }
 
 func TestCombineNotes(t *testing.T) {
-	f := CombineNots
 	input := []string{"not", "amazing", "not"}
 	output := []string{"not", "amazing", "not", "not-amazing"}
-	result := f(input)
-	Assert(t, len(result) == len(output), "length")
-	for inx, word := range result {
-		Assert(t, word == output[inx], inx, word)
-	}
+    compareOutput(t, input, output, CombineNots)
+}
+
+func TestExclusions(t *testing.T) {
+    excl := []string{"forbidden", "dontsay", "verboten"}
+    input := []string{"dog", "forbidden", "cat", "dontsay", "verboten", "mouse"}
+    output := []string{"dog", "cat", "mouse"}
+    compareOutput(t, input, output, SanitizeExclusions(excl))
+}
+
+func TestExclusionsNil(t *testing.T) {
+    excl := []string{}
+    input := []string{"dog", "forbidden", "cat", "dontsay", "verboten", "mouse"}
+    output := []string{"dog", "forbidden", "cat", "dontsay", "verboten", "mouse"}
+    compareOutput(t, input, output, SanitizeExclusions(excl))
 }
