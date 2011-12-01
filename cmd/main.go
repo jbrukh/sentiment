@@ -22,10 +22,10 @@ var exclList *string       // list of excluded terms
 var count [2]int           // the count of all classifications
 var highCount [2]int       // the count of all learned classifications
 var thresh *float64        // threshold for learning
-var printOnly *bool        // suppress classification
+var printOnly *bool        // suppress classification?
 
 func init() {
-    // command-line flags
+	// command-line flags
 	track = flag.String("track", "", "comma-separated list of tracking terms")
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
@@ -34,7 +34,7 @@ func init() {
 
 	args := flag.Args()
 	if len(args) != 2 {
-		println("Usage: [--track|--thresh|--exclude|--help] <username> <password>")
+		println("Usage: [--help|<options>...] <username> <password>")
 		os.Exit(1)
 	}
 	username = args[0]
@@ -44,16 +44,16 @@ func init() {
 	classifier = NewClassifier(Positive, Negative)
 	LearnFile(classifier, "data/positive.txt", Positive)
 	LearnFile(classifier, "data/negative.txt", Negative)
-	fmt.Println("classifier is trained!")
+	println("classifier is trained!")
 
 	// init the sanitizer
 	excl := strings.Split(*exclList, ",")
 	if *exclList != "" {
-		fmt.Printf("excluding: %v\n", excl)
+		fmt.Fprintf(os.Stderr, "excluding: %v\n", excl)
 	}
 
 	stopWords := ReadFile("data/stopwords.txt")
-	fmt.Printf("stop words: %v\n", stopWords)
+	fmt.Fprintf(os.Stderr, "stop words: %v\n", stopWords)
 	san = NewSanitizer(
 		ToLower,
 		NoMentions,
@@ -68,17 +68,18 @@ func init() {
 }
 
 func main() {
-	stream := make(chan *twitterstream.Tweet)
+    // stream Twitter
+    stream := make(chan *twitterstream.Tweet)
 	client := twitterstream.NewClient(username, password)
-
-	fmt.Printf("track = %v\n", *track)
 	tracks := strings.Split(*track, ",")
-
-	err := client.Track(tracks, stream)
-	if err != nil {
+    
+    err := client.Track(tracks, stream)
+    if err != nil {
 		println(err.String())
 	}
+	fmt.Fprintf(os.Stderr, "track = %v\n", *track)
 
+    // process the tweets
 	for {
 		tw := (<-stream).Text
 		if !*printOnly {
@@ -130,6 +131,7 @@ func process(document string) {
 	//fmt.Printf("%5.5f (high-probability posrate)\n", highrate)
 }
 
+// pretty print all the classification information
 func prettyPrintDoc(doc []string) {
 	//fmt.Printf("\n%v\n", doc)
 	fmt.Printf("\t")
@@ -148,6 +150,8 @@ func prettyPrintDoc(doc []string) {
 	}
 }
 
+// abbrev will abreavate a word with ".." if it
+// is too long. It is used for display purposes.
 func abbrev(word string, max int) (result string) {
 	result = word
 	if max < 5 {
