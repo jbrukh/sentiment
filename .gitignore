@@ -1,2 +1,5 @@
 !.gitignore
 *.txt
+_*
+*.6
+/bin/
