@@ -28,7 +28,7 @@ func TestPunctuation(t *testing.T) {
 		"hello[][][[\\||", "$#@hello>>><<,,..", ";\"./hello???"}
 	output := []string{"poop!", "poop!?", "poop!!", "poop", "poop",
 		"hello", "hello", "hello", "hello", "hello???"}
-    compareOutput(t, input, output, f)
+	compareOutput(t, input, output, f)
 }
 
 func TestNoMentions(t *testing.T) {
@@ -37,9 +37,9 @@ func TestNoMentions(t *testing.T) {
 	compareOutput(t, input, output, NoMentions)
 }
 
-func TestCombineNotes(t *testing.T) {
+func TestCombineNots(t *testing.T) {
 	input := []string{"not", "amazing", "not"}
-	output := []string{"not", "amazing", "not", "not-amazing"}
+	output := []string{"not-amazing", "not"}
 	compareOutput(t, input, output, CombineNots)
 }
 

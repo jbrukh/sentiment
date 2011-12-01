@@ -7,7 +7,11 @@ import "regexp"
 const punct = "?!~`@#$%^&*\\(\\)\\-_+={}\\[\\]:;|\\\\\"'/.,<>"
 
 var leading = regexp.MustCompile("^[" + punct + "]+|[" + punct[2:] + "]+$")
-var StopWords = ReadFile("data/stopwords.txt")
+var notWords = []string{
+        "not", "don't", "dont", "won't", "wont", "weren't", "werent", 
+        "can't", "cant", "isn't", "isnt", "aren't", "arent", 
+        "couldn't", "couldnt", "shouldn't", "shouldnt", "wouldn't", "wouldnt"}
+
 
 func ToLower(words []string) (result []string) {
 	return apply(words, func(input string) string {
@@ -48,12 +52,24 @@ func Punctuation(words []string) (result []string) {
 	return
 }
 
+// Results in combining negations with a dash.
 func CombineNots(words []string) (result []string) {
-	result = words
-	for inx, word := range words {
-		if word == "not" && inx != len(words)-1 {
-			result = append(result, "not-"+words[inx+1])
-		}
+	result = make([]string, 0, len(words))
+    m := make(map[string]bool)
+    for _, item := range notWords {
+        m[item] = true
+    }
+	for inx := 0; inx < len(words); inx++ {
+        word := words[inx]
+        _, ok := m[word]
+        var which string
+		if ok && inx != len(words)-1 {
+			which = word+"-"+words[inx+1]
+            inx++ // skip the next
+		} else {
+           which = word 
+        }
+        result = append(result, which)
 	}
 	return
 }

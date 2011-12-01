@@ -48,16 +48,18 @@ func init() {
 	if *exclList != "" {
 		fmt.Printf("excluding: %v\n", excl)
 	}
+
+    stopWords := ReadFile("data/stopwords.txt")
+    fmt.Printf("stop words: %v\n", stopWords)
 	san = NewSanitizer(
 		ToLower,
 		NoMentions,
 		NoLinks,
 		NoNumbers,
-		SmallWords,
 		Punctuation,
 		CombineNots,
 		Exclusions(excl),
-		Exclusions(StopWords),
+		Exclusions(stopWords),
 	)
 }
 
