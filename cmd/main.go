@@ -68,18 +68,18 @@ func init() {
 }
 
 func main() {
-    // stream Twitter
-    stream := make(chan *twitterstream.Tweet)
+	// stream Twitter
+	stream := make(chan *twitterstream.Tweet)
 	client := twitterstream.NewClient(username, password)
 	tracks := strings.Split(*track, ",")
-    
-    err := client.Track(tracks, stream)
-    if err != nil {
+
+	err := client.Track(tracks, stream)
+	if err != nil {
 		println(err.String())
 	}
 	fmt.Fprintf(os.Stderr, "track = %v\n", *track)
 
-    // process the tweets
+	// process the tweets
 	for {
 		tw := (<-stream).Text
 		if !*printOnly {
