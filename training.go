@@ -55,14 +55,14 @@ func ReadFile(name string) (words []string) {
 		panic("could not open file")
 	}
 	reader := bufio.NewReader(file)
-    words = make([]string,0)
+	words = make([]string, 0)
 	for {
 		line, _, err := reader.ReadLine()
 		if line == nil || err != nil {
 			break
 		}
 		items := strings.Split(string(line), " ")
-        words = append(words, items...)
-    }
-    return
+		words = append(words, items...)
+	}
+	return
 }
