@@ -5,9 +5,8 @@ import "regexp"
 
 // constants
 const punct = "?!~`@#$%^&*\\(\\)\\-_+={}\\[\\]:;|\\\\\"'/.,<>"
-
 var leading = regexp.MustCompile("^[" + punct + "]+|[" + punct[2:] + "]+$")
-var StopWords = []string{"of"}
+var StopWords = ReadFile("data/stopwords.txt")
 
 func ToLower(words []string) (result []string) {
 	return apply(words, func(input string) string {
@@ -36,7 +35,7 @@ func NoNumbers(words []string) (result []string) {
 
 func SmallWords(words []string) (result []string) {
 	return filterIf(words, func(input string) bool {
-		return len(input) < 3
+		return len(input)<3
 	})
 }
 
@@ -73,3 +72,4 @@ func Exclusions(excl []string) SanitizerFunc {
 		})
 	}
 }
+

@@ -49,7 +49,7 @@ func init() {
 		fmt.Printf("excluding: %v\n", excl)
 	}
 	san = NewSanitizer(
-		ToLower,
+        ToLower,
 		NoMentions,
 		NoLinks,
 		NoNumbers,

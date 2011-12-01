@@ -44,3 +44,25 @@ func LearnFile(classifier *Classifier, name string, class Class) {
 		classifier.Learn(words, class)
 	}
 }
+
+// ReadFile will place whitespace separated tokens
+// into a string array from a file.
+//
+// TODO: this can be done better.
+func ReadFile(name string) (words []string) {
+	file, err := os.OpenFile(name, os.O_RDONLY, 0666)
+	if err != nil {
+		panic("could not open file")
+	}
+	reader := bufio.NewReader(file)
+    words = make([]string,0)
+	for {
+		line, _, err := reader.ReadLine()
+		if line == nil || err != nil {
+			break
+		}
+		items := strings.Split(string(line), " ")
+        words = append(words, items...)
+    }
+    return
+}

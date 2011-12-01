@@ -23,6 +23,7 @@ func NewSanitizer(funcs ...SanitizerFunc) *Sanitizer {
 	}
 }
 
+
 func (s *Sanitizer) GetDocument(document string) (result []string) {
 	document = string(whitespace.ReplaceAll([]byte(document), []byte(" ")))
 	result = strings.Split(document, " ")
