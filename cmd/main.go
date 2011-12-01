@@ -25,10 +25,11 @@ var thresh *float64        // threshold for learning
 var printOnly *bool        // suppress classification
 
 func init() {
+    // command-line flags
 	track = flag.String("track", "", "comma-separated list of tracking terms")
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
-    printOnly = flat.Bool("print-only", false, "only print the Tweets, do not classify them")
+	printOnly = flag.Bool("print-only", false, "only print the Tweets, do not classify them")
 	flag.Parse()
 
 	args := flag.Args()
@@ -59,7 +60,7 @@ func init() {
 		NoLinks,
 		NoNumbers,
 		Punctuation,
-        NoSmallWords,
+		NoSmallWords,
 		CombineNots,
 		Exclusions(excl),
 		Exclusions(stopWords),
@@ -80,11 +81,11 @@ func main() {
 
 	for {
 		tw := (<-stream).Text
-        if (!*printOnly) {
-		    process(tw)
-        } else {
-            fmt.Println(tw)
-        }
+		if !*printOnly {
+			process(tw)
+		} else {
+			fmt.Println(tw)
+		}
 	}
 }
 
