@@ -23,7 +23,7 @@ func ClassifierPrompt(classifier *Classifier) {
 			println("exiting")
 			break
 		}
-		scores, _, _ := classifier.Score(strings.Split(string(line), " "))
+		scores, _, _ := classifier.Scores(strings.Split(string(line), " "))
 		fmt.Printf("%v\n", scores)
 	}
 }
