@@ -4,6 +4,8 @@ package main
 import (
 	"fmt"
 	"os"
+    "os/signal"
+    "time"
 	"twitterstream"
 	"flag"
 	"strings"
@@ -16,13 +18,14 @@ const DefaultThresh = .95
 var username string        // twitter username
 var password string        // twitter password
 var track *string          // comma-delimited list of tracking keywords for twitter api
-var classifier *Classifier // the classifier
+var c *Classifier          // the classifier
 var san *Sanitizer         // the sanitizer
 var exclList *string       // list of excluded terms
 var count [2]int           // the count of all classifications
 var highCount [2]int       // the count of all learned classifications
 var thresh *float64        // threshold for learning
 var printOnly *bool        // suppress classification?
+var loadFile *string
 
 func init() {
 	// command-line flags
@@ -30,8 +33,10 @@ func init() {
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
 	printOnly = flag.Bool("print-only", false, "only print the Tweets, do not classify them")
-	flag.Parse()
+    loadFile = flag.String("load-file", "", "specify classifier file")
+    flag.Parse()
 
+    // read the arguments
 	args := flag.Args()
 	if len(args) != 2 {
 		println("Usage: [--help|<options>...] <username> <password>")
@@ -40,18 +45,29 @@ func init() {
 	username = args[0]
 	password = args[1]
 
-	// train the classifier
-	classifier = NewClassifier(Positive, Negative)
-	LearnFile(classifier, "data/positive.txt", Positive)
-	LearnFile(classifier, "data/negative.txt", Negative)
-	println("classifier is trained!")
+    // load and train the classifier
+    if (*loadFile != "") {
+        // from a file
+        var err os.Error
+        c, err = NewClassifierFromFile(*loadFile)
+        if err != nil {
+            println("error loading:", err.String())
+            os.Exit(1)
+        }
+	    fmt.Fprintf(os.Stderr, "classifier is loaded: %v\n", c.WordCount())
+    } else {
+        // from scratch
+	    c = NewClassifier(Positive, Negative)
+	    LearnFile(c, "data/positive.txt", Positive)
+	    LearnFile(c, "data/negative.txt", Negative)
+	    fmt.Fprintf(os.Stderr, "classifier is trained: %v\n", c.WordCount())
+    }
 
 	// init the sanitizer
 	excl := strings.Split(*exclList, ",")
 	if *exclList != "" {
 		fmt.Fprintf(os.Stderr, "excluding: %v\n", excl)
 	}
-
 	stopWords := ReadFile("data/stopwords.txt")
 	fmt.Fprintf(os.Stderr, "stop words: %v\n", stopWords)
 	san = NewSanitizer(
@@ -65,6 +81,30 @@ func init() {
 		Exclusions(excl),
 		Exclusions(stopWords),
 	)
+
+    // listen for Ctrl-C
+    go signalHandler()
+}
+
+func signalHandler() {
+    for {
+        sig := <-signal.Incoming
+        if strings.HasPrefix(sig.String(), "SIGTSTP") {
+            // ctrl-Z
+            t := time.LocalTime()
+            name := t.Format("15-04-05")+".data"
+            println("\nsaving classifier to", name)
+            err := c.WriteToFile(name)
+            if err != nil {
+                println("error", err)
+            }
+            os.Exit(0)
+        } else if strings.HasPrefix(sig.String(), "SIGINT") {
+            // Ctrol-C
+            println("\nstopping without save")
+            os.Exit(0)
+        }
+    }
 }
 
 func main() {
@@ -102,10 +142,10 @@ func process(document string) {
 	}
 
 	// classification of this document
-	scores, inx, _ := classifier.Probabilities(doc)
-	logScores, logInx, _ := classifier.Scores(doc)
-	class := classifier.Classes[inx]
-	logClass := classifier.Classes[logInx]
+	scores, inx, _ := c.ProbScores(doc)
+	logScores, logInx, _ := c.LogScores(doc)
+	class := c.Classes[inx]
+	logClass := c.Classes[logInx]
 	count[inx]++
 
 	// the rate of positive sentiment
@@ -115,7 +155,7 @@ func process(document string) {
 	// if above the threshold, then learn
 	// this document
 	if scores[inx] > *thresh {
-		classifier.Learn(doc, class)
+		c.Learn(doc, class)
 		learned = "***"
 	}
 
@@ -140,9 +180,9 @@ func prettyPrintDoc(doc []string) {
 	}
 	fmt.Println("")
 
-	freqs := classifier.WordFrequencies(doc)
+	freqs := c.WordFrequencies(doc)
 	for i := 0; i < 2; i++ {
-		fmt.Printf("%6s", classifier.Classes[i])
+		fmt.Printf("%6s", c.Classes[i])
 		for j := 0; j < len(doc); j++ {
 			fmt.Printf("%7.4f", freqs[i][j])
 		}
