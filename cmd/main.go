@@ -4,8 +4,8 @@ package main
 import (
 	"fmt"
 	"os"
-    "os/signal"
-    "time"
+	"os/signal"
+	"time"
 	"twitterstream"
 	"flag"
 	"strings"
@@ -15,16 +15,16 @@ import (
 
 const DefaultThresh = .95
 
-var username string        // twitter username
-var password string        // twitter password
-var track *string          // comma-delimited list of tracking keywords for twitter api
-var c *Classifier          // the classifier
-var san *Sanitizer         // the sanitizer
-var exclList *string       // list of excluded terms
-var count [2]int           // the count of all classifications
-var highCount [2]int       // the count of all learned classifications
-var thresh *float64        // threshold for learning
-var printOnly *bool        // suppress classification?
+var username string  // twitter username
+var password string  // twitter password
+var track *string    // comma-delimited list of tracking keywords for twitter api
+var c *Classifier    // the classifier
+var san *Sanitizer   // the sanitizer
+var exclList *string // list of excluded terms
+var count [2]int     // the count of all classifications
+var highCount [2]int // the count of all learned classifications
+var thresh *float64  // threshold for learning
+var printOnly *bool  // suppress classification?
 var loadFile *string
 
 func init() {
@@ -33,10 +33,10 @@ func init() {
 	thresh = flag.Float64("thresh", DefaultThresh, "the confidence threshold required to learn new content")
 	exclList = flag.String("exclude", "", "comma-separated list of keywords excluded from classification")
 	printOnly = flag.Bool("print-only", false, "only print the Tweets, do not classify them")
-    loadFile = flag.String("load-file", "", "specify classifier file")
-    flag.Parse()
+	loadFile = flag.String("load-file", "", "specify classifier file")
+	flag.Parse()
 
-    // read the arguments
+	// read the arguments
 	args := flag.Args()
 	if len(args) != 2 {
 		println("Usage: [--help|<options>...] <username> <password>")
@@ -45,23 +45,23 @@ func init() {
 	username = args[0]
 	password = args[1]
 
-    // load and train the classifier
-    if (*loadFile != "") {
-        // from a file
-        var err os.Error
-        c, err = NewClassifierFromFile(*loadFile)
-        if err != nil {
-            println("error loading:", err.String())
-            os.Exit(1)
-        }
-	    fmt.Fprintf(os.Stderr, "classifier is loaded: %v\n", c.WordCount())
-    } else {
-        // from scratch
-	    c = NewClassifier(Positive, Negative)
-	    LearnFile(c, "data/positive.txt", Positive)
-	    LearnFile(c, "data/negative.txt", Negative)
-	    fmt.Fprintf(os.Stderr, "classifier is trained: %v\n", c.WordCount())
-    }
+	// load and train the classifier
+	if *loadFile != "" {
+		// from a file
+		var err os.Error
+		c, err = NewClassifierFromFile(*loadFile)
+		if err != nil {
+			println("error loading:", err.String())
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "classifier is loaded: %v\n", c.WordCount())
+	} else {
+		// from scratch
+		c = NewClassifier(Positive, Negative)
+		LearnFile(c, "data/positive.txt", Positive)
+		LearnFile(c, "data/negative.txt", Negative)
+		fmt.Fprintf(os.Stderr, "classifier is trained: %v\n", c.WordCount())
+	}
 
 	// init the sanitizer
 	excl := strings.Split(*exclList, ",")
@@ -82,29 +82,29 @@ func init() {
 		Exclusions(stopWords),
 	)
 
-    // listen for Ctrl-C
-    go signalHandler()
+	// listen for Ctrl-C
+	go signalHandler()
 }
 
 func signalHandler() {
-    for {
-        sig := <-signal.Incoming
-        if strings.HasPrefix(sig.String(), "SIGTSTP") {
-            // ctrl-Z
-            t := time.LocalTime()
-            name := t.Format("15-04-05")+".data"
-            println("\nsaving classifier to", name)
-            err := c.WriteToFile(name)
-            if err != nil {
-                println("error", err)
-            }
-            os.Exit(0)
-        } else if strings.HasPrefix(sig.String(), "SIGINT") {
-            // Ctrol-C
-            println("\nstopping without save")
-            os.Exit(0)
-        }
-    }
+	for {
+		sig := <-signal.Incoming
+		if strings.HasPrefix(sig.String(), "SIGTSTP") {
+			// ctrl-Z
+			t := time.LocalTime()
+			name := t.Format("15-04-05") + ".data"
+			println("\nsaving classifier to", name)
+			err := c.WriteToFile(name)
+			if err != nil {
+				println("error", err)
+			}
+			os.Exit(0)
+		} else if strings.HasPrefix(sig.String(), "SIGINT") {
+			// Ctrol-C
+			println("\nstopping without save")
+			os.Exit(0)
+		}
+	}
 }
 
 func main() {

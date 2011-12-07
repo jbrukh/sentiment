@@ -3,3 +3,5 @@
 _*
 *.6
 /bin/
+/data/output/
+/cmd/analyzer
