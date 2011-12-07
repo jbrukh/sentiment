@@ -1,0 +1,11 @@
+### Twitter Sentiment Analyzer
+
+Jake Brukhman (jbrukh@gmail.com). Provided as-is.
+
+This project depends on:
+
+    https://github.com/hoisie/httplib.go
+    https://github.com/hoisie/twitterstream
+    https://github.com/jbrukh/bayesian
+
+Use go-gb to compile/install (https://github.com/skelterjohn/go-gb).
